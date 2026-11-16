@@ -12,7 +12,7 @@ any code can read and as a small NumPy package:
 
 - **C² splits** of `1/r^ν`, `ν = 1, …, 6` (from the Coulomb to the dispersion interaction), for the tolerances
   `10⁻²` to `10⁻⁸`. The local part and its first two derivatives vanish at the cutoff, so the energy of a pair is twice
-  continuously differentiable where the pair crosses it, which removes a source of energy drift in long simulations.
+  continuously differentiable where the pair crosses it, which removes a source of energy drift in long molecular dynamics simulations.
 - **Optimized SI kernels** `φ*_P` for the Coulomb interaction, orders `P = 4, …, 10`, tolerances `10⁻²` to `10⁻⁸`. Each
   is twice continuously differentiable, conserves charge and dipole by construction (as B-splines do), and meets its
   tolerance on the coarsest grid for its order, never finer than that of the B-spline of the same order.
