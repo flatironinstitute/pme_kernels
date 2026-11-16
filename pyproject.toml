@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pme_kernels"
+version = "0.1.0"
+description = "C^2 splitting kernels and optimized spreading and interpolation kernels for particle mesh Ewald methods"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [{name = "Shidong Jiang"}, {name = "Jiuyang Liang"}, {name = "Libin Lu"}]
+requires-python = ">=3.9"
+dependencies = ["numpy"]
+
+[project.urls]
+Repository = "https://github.com/flatironinstitute/pme_kernels"
+
+[tool.setuptools]
+packages = ["pme_kernels"]

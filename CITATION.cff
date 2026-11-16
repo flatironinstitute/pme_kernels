@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: If you use these kernels, please cite the paper below.
+title: "pme_kernels: kernels for particle mesh Ewald methods"
+authors:
+  - family-names: Jiang
+    given-names: Shidong
+  - family-names: Liang
+    given-names: Jiuyang
+  - family-names: Lu
+    given-names: Libin
+repository-code: "https://github.com/flatironinstitute/pme_kernels"
+license: Apache-2.0
+preferred-citation:
+  type: article
+  title: "Kernel Design in Particle Mesh Ewald Methods: Splitting, Interpolation, and Upsampling"
+  authors:
+    - family-names: Jiang
+      given-names: Shidong
+    - family-names: Liang
+      given-names: Jiuyang
+    - family-names: Lu
+      given-names: Libin
+  year: 2026
+  status: preprint
