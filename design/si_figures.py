@@ -1,18 +1,18 @@
 """Data for the figures of the SI kernels: their shapes and transforms, and the AD force error of each mode.
 
 For the cases (P, eps, sigma) below, the kernels are B_P, the psi_0 kernel with its bandwidth tuned on the grid sigma
-in the box of side BOX r_c (as in review_si_coarsest.py), and the kernel of review_si_coarsest.py for (P, eps), whose
+in the box of side BOX r_c (as in si_coarsest.py), and the kernel of si_coarsest.py for (P, eps), whose
 shape does not change with the grid. A grid of spacing h has the ratio sigma = (pi/h)/(c_s/r_c) of its Nyquist
 frequency to the band edge of the C^2 Coulomb split of eps.
 
-The shapes are phi(t) on [0, P/2] and |phi_hat(q)| for 0 <= q = h xi <= 6 pi (review_si_kernels_space.csv,
-review_si_kernels_frequency.csv), with the jump of the psi_0 kernel and the transforms at 2 pi, 4 pi, the band edge
-pi/s, and its alias 2 pi - pi/s in review_si_figures.json. The error of a
-mode xi of the band is the relative mean-square AD force error of review_finite_grids.ad_squared_error, with the
+The shapes are phi(t) on [0, P/2] and |phi_hat(q)| for 0 <= q = h xi <= 6 pi (si_kernels_space.csv,
+si_kernels_frequency.csv), with the jump of the psi_0 kernel and the transforms at 2 pi, 4 pi, the band edge
+pi/s, and its alias 2 pi - pi/s in si_figures.json. The error of a
+mode xi of the band is the relative mean-square AD force error of finite_grids.ad_squared_error, with the
 pair-optimal influence function and all aliases; its average over the directions of xi at |xi| = rho c_s/r_c, for
-10^-3 <= rho <= 1, is eta(rho) (review_si_modes.csv). The error of the kernel, the square root of the average of eta
-weighted by the mean-square force chi_hat(c_s rho)^2 of the modes, is that of the tables: review_si_coarsest.evaluate
-in the limit of large boxes (spherical rule), and in the box of side BOX r_c (review_si_figures.json).
+10^-3 <= rho <= 1, is eta(rho) (si_modes.csv). The error of the kernel, the square root of the average of eta
+weighted by the mean-square force chi_hat(c_s rho)^2 of the modes, is that of the tables: si_coarsest.evaluate
+in the limit of large boxes (spherical rule), and in the box of side BOX r_c (si_figures.json).
 NumPy only. Run with OPENBLAS_NUM_THREADS=1.
 """
 import csv
@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 
-import review_si_coarsest as co
+import si_coarsest as co
 
 DEST = Path(__file__).resolve().parent/'records'
 BOX = co.BOX
@@ -33,7 +33,7 @@ MODES = ((4, 1e-4, 1.), (4, 1e-4, 2.), (4, 1e-4, None))
 
 
 def record(P, eps):
-    rows = json.loads((DEST/'review_si_coarsest_record.json').read_text())['results']
+    rows = json.loads((DEST/'si_coarsest_record.json').read_text())['results']
     return next(r for r in rows if r['P'] == P and abs(r['tolerance']-eps) < 1e-15)
 
 
@@ -91,7 +91,7 @@ def shapes():
                          prolate_edge=float(kernels['prolate'][2]),
                          transform={name: dict(zip(('2pi', '4pi', 'alias_of_band_edge', 'band_edge'), v))
                                     for name, v in values.items()})
-    for name, columns in (('review_si_kernels_space.csv', space), ('review_si_kernels_frequency.csv', frequency)):
+    for name, columns in (('si_kernels_space.csv', space), ('si_kernels_frequency.csv', frequency)):
         with (DEST/name).open('w') as stream:
             writer = csv.writer(stream, lineterminator='\n')
             writer.writerow(list(columns))
@@ -114,7 +114,7 @@ def modes():
             entry[name] = dict(limit=co.evaluate(P, sigma, limit, k), box=co.evaluate(P, sigma, box, k))
         info.append(entry)
         print(entry, flush=True)
-    with (DEST/'review_si_modes.csv').open('w') as stream:
+    with (DEST/'si_modes.csv').open('w') as stream:
         writer = csv.writer(stream, lineterminator='\n')
         writer.writerow(list(columns))
         writer.writerows(np.array(list(columns.values())).T.tolist())
@@ -123,6 +123,6 @@ def modes():
 
 if __name__ == '__main__':
     import sys
-    # The errors per mode, for a figure no longer in the paper, only on request.
+    # The errors per mode with --modes.
     out = dict(shapes=shapes(), **(dict(modes=modes()) if '--modes' in sys.argv else {}))
-    (DEST/'review_si_figures.json').write_text(json.dumps(out, indent=1)+'\n')
+    (DEST/'si_figures.json').write_text(json.dumps(out, indent=1)+'\n')

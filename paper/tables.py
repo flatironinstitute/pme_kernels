@@ -1,4 +1,4 @@
-"""Tables 5.1 and 5.2 of the paper from the record of the SI kernel study (design/records/review_si_coarsest_record.json).
+"""Tables 5.1 and 5.2 of the paper from the record of the SI kernel study (design/records/si_coarsest_record.json).
 
 Table 5.1: the smallest order P <= 10 whose SI kernel meets the tolerance on the grid that ESP uses, s = 1, for B_P
 and phi_P^* in the limit of large boxes and the psi_0 kernel in a box of side 10 r_c; tolerances that no kernel of the
@@ -10,7 +10,7 @@ import math
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-RECORD = HERE.parent/'design'/'records'/'review_si_coarsest_record.json'
+RECORD = HERE.parent/'design'/'records'/'si_coarsest_record.json'
 
 
 def power(x):

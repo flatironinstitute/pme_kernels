@@ -1,6 +1,6 @@
 """One C^2 SI kernel for each order, for all grids from the base grid to the twofold upsampled one.
 
-For the C^2 Coulomb split of a tolerance (review_c2_split_fewest.py: the
+For the C^2 Coulomb split of a tolerance (c2_split_fewest.py: the
 bandwidth c_s, and the base grid of n0 points whose Nyquist frequency first
 reaches c_s/r_c, in the box L = 10 with r_c = 1) and an order P, the
 kernel phi(t) = sum_j a_j psi_{2j}^{c_w}(2t/P), |t| <= P/2, solves
@@ -10,7 +10,7 @@ kernel phi(t) = sum_j a_j psi_{2j}^{c_w}(2t/P), |t| <= P/2, solves
                |phi'''| <= M_P = max|B_P'''|, phi_hat > 0 on the band,
     subject to E_s(phi) <= E_s(B_P) for s = 1.25, 1.5, 1.75, 2,
 
-where E_s is the relative AD aliasing error (5.5) of review_ad_grids.py on
+where E_s is the relative AD aliasing error of the band (Section 4.5) on
 the grid h0/s, with the band |xi| <= c_s/r_c weighted by the C^2 split and
 the pair-optimal influence of each kernel. The bounds are imposed at 400
 points of [0, P/2] that cluster at the end of the support and checked on
@@ -33,14 +33,14 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import leggauss, legder, legval
 
-import review_ad_grids as grids
-import review_c2_split_fewest as splits
-import review_finite_grids as design
-import review_refinement as ref
-import review_si_bounded as bounded
+import ad_grids as grids
+import c2_split_fewest as splits
+import finite_grids as design
+import refinement as ref
+import si_bounded as bounded
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_si_design'
+STEM = 'si_design'
 # The ESP tolerances of the paper and their C^2 splits.
 TOLERANCES = (1e-3, 1e-4, 1e-5)
 # Grids on which the kernel must not be worse than B_P; s = 1 is the objective.
@@ -57,7 +57,7 @@ FLOOR = 1e-6
 
 def c2_band(tolerance):
     """Base-grid coordinates, band (triples, weights) and n0 for the C^2 Coulomb split of a tolerance."""
-    record = json.loads((DEST/'review_c2_split_fewest_record.json').read_text())
+    record = json.loads((DEST/'c2_split_fewest_record.json').read_text())
     split = next(x for x in record['splits'] if x['nu'] == 1 and x['tolerance'] == tolerance)
     c, n0, profile = split['c'], split['n0'], np.array(split['legendre_coefficients'])
     ks = np.arange(-int(np.floor(c/ref.dxi)), int(np.floor(c/ref.dxi))+1)
@@ -450,7 +450,7 @@ def task(item):
 
 
 def test():
-    """The interior-point solver against the KKT conditions, and the SQP method on a per-grid problem of review_si_bounded."""
+    """The interior-point solver against the KKT conditions, and the SQP method on a per-grid problem of si_bounded."""
     rng = np.random.default_rng(1)
     for n, m in ((5, 12), (30, 900)):
         B = rng.normal(size=(n, n)); H = B@B.T+1e-3*np.eye(n)
@@ -459,7 +459,7 @@ def test():
         kkt = max(np.abs(H@x+g+C.T@lam).max(), max(0., (C@x-d).max()), np.abs(lam*(d-C@x)).max(), max(0., -lam.min()))
         print('qp', n, m, 'KKT residual', kkt, flush=True)
         assert kkt < 1e-7
-    record = json.loads((DEST/'review_si_bounded_record.json').read_text())['rows']
+    record = json.loads((DEST/'si_bounded_record.json').read_text())['rows']
     for P, N in ((4, 24), (5, 24)):
         row = next(r for r in record if (r['P'], r['s'], r['label'], r['kind'], r['N']) == (P, 1, 'c2_record', 'bounded', N))
         scale = {1.: row['error']}
@@ -500,7 +500,7 @@ def main(workers, tolerances, counts):
     (DEST/(name+'_record.json')).write_text(json.dumps(dict(
         problem='minimize E_1 over even C^2 phi with int phi = 1, phi\' <= 0 on [0, P/2], |phi\'\'\'| <= max|B_P\'\'\'|, '
                 'phi_hat > 0 on the band, subject to E_s <= E_s(B_P) for s in '+str(UPSAMPLED),
-        split='the C^2 Coulomb split of review_c2_split_fewest_record.json', box=dict(L=ref.L, rc=ref.rc),
+        split='the C^2 Coulomb split of c2_split_fewest_record.json', box=dict(L=ref.L, rc=ref.rc),
         constraint_points=len(POINTS), check_points=len(FINE), iterations=ITERATIONS,
         method='trust-region SQP, l_inf penalty, Gauss-Newton Hessians, interior-point subproblems; '
                'starts: the psi_0 kernel, the projection of B_P, and the kernel for the previous N',
@@ -557,7 +557,7 @@ def unbounded(workers, counts):
     with Pool(workers) as pool:
         rows = [r for out in pool.map(task, items, chunksize=1) for r in out]
     (DEST/(STEM+'_unbounded_record.json')).write_text(json.dumps(dict(
-        problem='as review_si_design_record.json without the bound on the third derivative', rows=rows), indent=1)+'\n')
+        problem='as si_design_record.json without the bound on the third derivative', rows=rows), indent=1)+'\n')
 
 
 def extended(workers, counts):
@@ -567,7 +567,7 @@ def extended(workers, counts):
     with Pool(workers) as pool:
         rows = [r for out in pool.map(task, items, chunksize=1) for r in out]
     (DEST/(STEM+'_extended_record.json')).write_text(json.dumps(dict(
-        problem='as review_si_design_record.json, tolerance 1e-4, the first bandwidths, up to 128 terms', rows=rows), indent=1)+'\n')
+        problem='as si_design_record.json, tolerance 1e-4, the first bandwidths, up to 128 terms', rows=rows), indent=1)+'\n')
 
 
 def factored_study(workers, tolerances, counts, name='factored'):
@@ -581,7 +581,7 @@ def factored_study(workers, tolerances, counts, name='factored'):
     with Pool(workers) as pool:
         rows = [r for out in pool.map(task, items, chunksize=1) for r in out]
     (DEST/(STEM+'_'+name+'_record.json')).write_text(json.dumps(dict(
-        problem='as review_si_design_record.json for phi = B_2 * g, g an expansion in even PSWFs on [-(P-2)/2, (P-2)/2]',
+        problem='as si_design_record.json for phi = B_2 * g, g an expansion in even PSWFs on [-(P-2)/2, (P-2)/2]',
         rows=rows), indent=1)+'\n')
 
 

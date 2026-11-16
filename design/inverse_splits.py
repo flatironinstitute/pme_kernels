@@ -1,13 +1,13 @@
 """C^d splits of 1/r^nu, nu = 1, ..., 6, with the fewest PSWF terms, and their truncation errors.
 
-The profile w is even on [-1, 1] with w(0) = 1, and the split is that of review_c2_split_fewest.py (Section 2.2):
+The profile w is even on [-1, 1] with w(0) = 1, and the split is that of c2_split_fewest.py (Section 3.3):
 the local part t^-nu R_nu(t), with R_2 = w, R_1 = int_t^1 w / int_0^1 w and R_{nu+2} = R_nu - (t/nu) R_nu', vanishes
 for t > 1, and the smooth part s_nu = t^-nu - t^-nu R_nu is t^-nu there. The local part, and with it the smooth part,
-is d times continuously differentiable at t = 1 if and only if R_nu^(j)(1) = 0 for j = 0, ..., d (Proposition 5.1),
+is d times continuously differentiable at t = 1 if and only if R_nu^(j)(1) = 0 for j = 0, ..., d (Proposition 3.1),
 d conditions for nu = 1, where R_1(1) = 0, and d + 1 for nu >= 2. The C^d split uses the fewest even PSWFs
 psi_0^c, ..., psi_2m^c that admit the m conditions.
 
-For each nu, d = 2, 3, 4, and each tolerance eps with the bandwidth c of ESP's rule chi(1) = eps (review_si_coarsest),
+For each nu, d = 2, 3, 4, and each tolerance eps with the bandwidth c of ESP's rule chi(1) = eps (si_coarsest),
 the program reports:
 - the coefficients of the profile relative to the first and its minimum on [0, 1];
 - the jump at the cutoff of the derivative of order d + 1 of the local part, relative to that of t^-nu;
@@ -28,12 +28,12 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legder, legdiv, leggauss, legint, legmulx, legroots, legsub, legval
 
-import review_c2_split_fewest as F
-import review_finite_grids as design
-import review_si_coarsest as co
+import c2_split_fewest as F
+import finite_grids as design
+import si_coarsest as co
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_inverse_splits'
+STEM = 'inverse_splits'
 TOLERANCES = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8)
 POWERS = (1, 2, 3, 4, 5, 6)
 ORDERS = (2, 3, 4)
@@ -68,7 +68,7 @@ def residual(profile, nu, normalized=True):
 def conditions(basis, nu, d):
     """The rows R_nu^(j)(1) = 0, j = 0, ..., d (j >= 1 for nu = 1), as a matrix acting on the coefficients."""
     if nu == 1:
-        # R_1^(j)(1) = -w^(j-1)(1)/int_0^1 w; the rows of review_c2_split_fewest.fewest.
+        # R_1^(j)(1) = -w^(j-1)(1)/int_0^1 w; the rows of c2_split_fewest.fewest.
         return np.array([legval(1., legder(basis.T, j)) for j in range(d)])
     return np.array([[legval(1., legder(residual(b, nu, False), j)) for b in basis] for j in range(d+1)])
 
@@ -87,7 +87,7 @@ def split(c, nu, d):
 def prolate_eigenvalues(c, count, size=60):
     """The eigenvalues gamma_0 < gamma_2 < ... of the prolate differential operator
     -((1 - t^2) psi')' + c^2 t^2 psi for the first count even PSWFs, from the matrix of
-    review_finite_grids.pswf_basis."""
+    finite_grids.pswf_basis."""
     k = np.arange(0, 2*size, 2, dtype=float)
     diagonal = k*(k+1)+c*c*(2*k*(k+1)-1)/((2*k+3)*(2*k-1))
     off = c*c*(k[:-1]+2)*(k[:-1]+1)/((2*k[:-1]+3)*np.sqrt((2*k[:-1]+1)*(2*k[:-1]+5)))
@@ -96,7 +96,7 @@ def prolate_eigenvalues(c, count, size=60):
 
 def closed_form(c, m):
     """The profile in the span of psi_0^c, ..., psi_2m^c with w^(j)(1) = 0, j < m, and w(0) = 1: its coefficients
-    are proportional to 1/(psi_2i(1) prod_{k != i}(gamma_2i - gamma_2k)) (Theorem 3.2)."""
+    are proportional to 1/(psi_2i(1) prod_{k != i}(gamma_2i - gamma_2k)) (Theorem 3.3)."""
     basis = design.pswf_basis(c, count=m+1, size=60)
     gamma = prolate_eigenvalues(c, m+1)
     end = legval(1., basis.T)

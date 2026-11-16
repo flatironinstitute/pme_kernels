@@ -1,7 +1,7 @@
 """Complete Coulomb validation of the stored finite-grid SI designs.
 
 NumPy only. All windows use the full-reference pair-optimal spectral-force
-influence. The physical setup matches review_finite_grids.py; no window is
+influence. The physical setup matches finite_grids.py; no window is
 fitted to the validation configurations. Run with OPENBLAS_NUM_THREADS=1.
 """
 import csv
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legder, leggauss, legint, legval
 
-import review_refinement as ref
+import refinement as ref
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -320,10 +320,10 @@ def mesh_setup(n, co_split):
 
 
 def main():
-    fits = json.loads((DEST/'review_finite_grids_record.json').read_text())['fits']
+    fits = json.loads((DEST/'finite_grids_record.json').read_text())['fits']
     spline_fits = {(int(x['P']), x['name']): float(x['beta'])
-                   for x in csv.DictReader((DEST/'review_spline_derivative.csv').open())}
-    baselines = {(int(x['P']), int(x['s'])): x for x in csv.DictReader((DEST/'review_retuned_refinement.csv').open())}
+                   for x in csv.DictReader((DEST/'spline_derivative.csv').open())}
+    baselines = {(int(x['P']), int(x['s'])): x for x in csv.DictReader((DEST/'retuned_refinement.csv').open())}
     co_split = ref.coeff(ref.c)
     rng = np.random.default_rng(20261021)
     samples = []
@@ -361,7 +361,7 @@ def main():
                                      **force_metrics(force, sample['retained'], sample['truth'], sample['q'])))
                 errors = [x['relative_force'] for x in rows if (x['P'], x['s'], x['method']) == (P, s, method)]
                 print(P, s, method, 'mean', np.mean(errors), 'tail', np.mean([x['tail'] for x in samples]), 'alias check', shell_difference, flush=True)
-    with (DEST/'review_complete_si.csv').open('w') as stream:
+    with (DEST/'complete_si.csv').open('w') as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader(); writer.writerows(rows)
     record = dict(L=ref.L, rc=ref.rc, c_s=ref.c, N=64, trials=len(samples), grids=[40, 80],
@@ -371,22 +371,22 @@ def main():
                   maximum_reference_difference=max(x['reference_difference'] for x in samples),
                   checks=checks,
                   configurations=[dict(positions=x['r'].tolist(), charges=x['q'].tolist()) for x in samples])
-    (DEST/'review_complete_si_record.json').write_text(json.dumps(record, indent=2)+'\n')
+    (DEST/'complete_si_record.json').write_text(json.dumps(record, indent=2)+'\n')
 
 
 def main_ad():
-    """AD forces with the SI kernels designed for AD by review_ad_grids.py.
+    """AD forces with the SI kernels designed for AD by ad_grids.py.
 
     The influence is the full-reference pair-optimal AD influence. The AD
     field of a particle includes a self field from its own spread charge;
     it is computed separately, so the error is reported with and without
     it, and the RMS self field of a unit charge is integrated over a cell."""
-    fits = {(x['P'], x['name']): x for x in json.loads((DEST/'review_ad_grids_record.json').read_text())['fits']}
+    fits = {(x['P'], x['name']): x for x in json.loads((DEST/'ad_grids_record.json').read_text())['fits']}
     tuned = {(int(x['P']), int(x['s'])): float(x['prolate_cw'])
-             for x in csv.DictReader((DEST/'review_ad_grids.csv').open())}
+             for x in csv.DictReader((DEST/'ad_grids.csv').open())}
     co_split = ref.coeff(ref.c)
     samples = []
-    for item in json.loads((DEST/'review_complete_si_record.json').read_text())['configurations']:
+    for item in json.loads((DEST/'complete_si_record.json').read_text())['configurations']:
         r, q = np.array(item['positions']), np.array(item['charges'])
         samples.append(dict(r=r, q=q, truth=gaussian_reference(r, q, 1.3), near=compact_near(r, q, co_split)))
     rows, kernels = [], []
@@ -427,25 +427,25 @@ def main_ad():
                 print(P, s, method, 'RMS', np.sqrt(np.mean([x['pair_scaled_squared_error'] for x in group])),
                       'without self', np.sqrt(np.mean([x['pair_scaled_squared_without_self'] for x in group])),
                       'unit self field RMS', check, flush=True)
-    with (DEST/'review_complete_si_ad.csv').open('w') as stream:
+    with (DEST/'complete_si_ad.csv').open('w') as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader(); writer.writerows(rows)
     record = dict(L=ref.L, rc=ref.rc, c_s=ref.c, N=64, trials=len(samples), grids=[40, 80],
                   force='AD: the derivative of the interior polynomial of the SI kernel',
                   influence='full-reference pair-optimal AD force, exact SI alias moments; physical aliases |m_a|<=3',
                   retained_modes='|k_a|<n/2; Nyquist planes omitted for every method',
-                  reference='Gaussian Ewald alpha=1.3; the configurations of review_complete_si_record.json',
+                  reference='Gaussian Ewald alpha=1.3; the configurations of complete_si_record.json',
                   self_field='field of a unit charge from its own spread charge; RMS over uniform positions by 48^3 Gauss points on one cell',
                   kernels=kernels)
-    (DEST/'review_complete_si_ad_record.json').write_text(json.dumps(record, indent=2)+'\n')
+    (DEST/'complete_si_ad_record.json').write_text(json.dumps(record, indent=2)+'\n')
 
 
 def design_inputs(tolerance=1e-4):
     """The C^2 Coulomb split of a tolerance, the designed SI kernel of each order, and the tuned psi_0 bandwidths."""
-    split = next(x for x in json.loads((DEST/'review_c2_split_fewest_record.json').read_text())['splits']
+    split = next(x for x in json.loads((DEST/'c2_split_fewest_record.json').read_text())['splits']
                  if x['nu'] == 1 and x['tolerance'] == tolerance)
-    record = json.loads((DEST/'review_si_design_record.json').read_text())
-    table = [x for x in csv.DictReader((DEST/'review_si_design.csv').open()) if float(x['tolerance']) == tolerance]
+    record = json.loads((DEST/'si_design_record.json').read_text())
+    table = [x for x in csv.DictReader((DEST/'si_design.csv').open()) if float(x['tolerance']) == tolerance]
     count = int(record['reported_count'])
     kernels = {}
     for P in (4, 5, 6):
@@ -460,12 +460,12 @@ def design_inputs(tolerance=1e-4):
 def main_design(grids=(40, 60, 80)):
     """AD forces with the C^2 Coulomb split and one designed SI kernel per order for every grid.
 
-    As main_ad, for the configurations of review_complete_si_record.json, with the C^2 split of the tolerance
-    1e-4 (review_c2_split_fewest_record.json) in place of the psi_0 split, the kernels of review_si_design.py,
+    As main_ad, for the configurations of complete_si_record.json, with the C^2 split of the tolerance
+    1e-4 (c2_split_fewest_record.json) in place of the psi_0 split, the kernels of si_design.py,
     the psi_0 kernel tuned for AD on each grid for the same split, and B_P, on the grids 40^3, 60^3 and 80^3."""
     co_split, c_s, designed, tuned = design_inputs()
     samples = []
-    for item in json.loads((DEST/'review_complete_si_record.json').read_text())['configurations']:
+    for item in json.loads((DEST/'complete_si_record.json').read_text())['configurations']:
         r, q = np.array(item['positions']), np.array(item['charges'])
         samples.append(dict(r=r, q=q, truth=gaussian_reference(r, q, 1.3), near=compact_near(r, q, co_split)))
     rows, kernels, tails = [], [], {}
@@ -504,25 +504,25 @@ def main_design(grids=(40, 60, 80)):
                 print(n, P, method, 'RMS', np.sqrt(np.mean([x['pair_scaled_squared_error'] for x in group])),
                       'without self', np.sqrt(np.mean([x['pair_scaled_squared_without_self'] for x in group])),
                       'unit self field RMS', check, flush=True)
-    with (DEST/'review_complete_design.csv').open('w') as stream:
+    with (DEST/'complete_design.csv').open('w') as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader(); writer.writerows(rows)
     record = dict(L=ref.L, rc=ref.rc, c_s=c_s, split='C^2 Coulomb split, tolerance 1e-4', N=64, trials=len(samples),
                   grids=list(grids), force='AD: the derivative of the interior polynomial of the SI kernel',
-                  kernels_source='review_si_design_record.json (one kernel per order) and review_si_design.csv (tuned psi_0)',
+                  kernels_source='si_design_record.json (one kernel per order) and si_design.csv (tuned psi_0)',
                   influence='full-reference pair-optimal AD force, exact SI alias moments; physical aliases |m_a|<=3',
                   retained_modes='|k_a|<n/2; Nyquist planes omitted for every method',
-                  reference='Gaussian Ewald alpha=1.3; the configurations of review_complete_si_record.json',
+                  reference='Gaussian Ewald alpha=1.3; the configurations of complete_si_record.json',
                   self_field='field of a unit charge from its own spread charge; RMS over uniform positions by 48^3 Gauss points on one cell',
                   tail_rms={str(n): v for n, v in tails.items()}, kernels=kernels)
-    (DEST/'review_complete_design_record.json').write_text(json.dumps(record, indent=2)+'\n')
+    (DEST/'complete_design_record.json').write_text(json.dumps(record, indent=2)+'\n')
 
 
 def coarsest_inputs(tolerance):
-    """The C^2 split of a tolerance, and for each order the kernel of review_si_coarsest.py with the coarsest grid
+    """The C^2 split of a tolerance, and for each order the kernel of si_coarsest.py with the coarsest grid
     ratios s = (pi/h)/(c_s/r_c) of that kernel, of B_P, and of the psi_0 kernel tuned on each grid."""
-    import review_c2_split_fewest as splits
-    record = json.loads((DEST/'review_si_coarsest_record.json').read_text())
+    import c2_split_fewest as splits
+    record = json.loads((DEST/'si_coarsest_record.json').read_text())
     results = {r['P']: r for r in record['results'] if r['tolerance'] == tolerance and 'failure' not in r}
     c_s = next(iter(results.values()))['c_s']
     return np.array(splits.fewest(c_s, 1)[1]), c_s, results
@@ -531,15 +531,15 @@ def coarsest_inputs(tolerance):
 def main_coarsest(tolerance=1e-4, orders=(4, 5, 6, 7)):
     """Complete AD forces with the C^2 split and, for each order, the kernels on the coarsest grids.
 
-    For the configurations of review_complete_si_record.json in the box L = 10 r_c, each order is computed on the
-    coarsest even grid on which the kernel of review_si_coarsest.py meets the tolerance in the limit of large boxes,
+    For the configurations of complete_si_record.json in the box L = 10 r_c, each order is computed on the
+    coarsest even grid on which the kernel of si_coarsest.py meets the tolerance in the limit of large boxes,
     on that of B_P, and on that of the psi_0 kernel in the box L = 10 r_c. On each grid, the kernels are that kernel,
     B_P, and the psi_0 kernel with its bandwidth tuned for the grid in the band of this box."""
-    import review_si_coarsest as co
+    import si_coarsest as co
     co_split, c_s, results = coarsest_inputs(tolerance)
     box = co.band(tolerance, L=ref.L)
     samples = []
-    for item in json.loads((DEST/'review_complete_si_record.json').read_text())['configurations']:
+    for item in json.loads((DEST/'complete_si_record.json').read_text())['configurations']:
         r, q = np.array(item['positions']), np.array(item['charges'])
         samples.append(dict(r=r, q=q, truth=gaussian_reference(r, q, 1.3), near=compact_near(r, q, co_split)))
     weight = [np.sum(x['q']**2)**2-np.sum(x['q']**4) for x in samples]
@@ -577,14 +577,14 @@ def main_coarsest(tolerance=1e-4, orders=(4, 5, 6, 7)):
                 group = [x for x in rows if (x['n'], x['P'], x['method']) == (n, P, method)]
                 print(P, n, method, 'relative', np.sqrt(np.mean([x['relative_force']**2 for x in group])),
                       'without self', np.sqrt(np.mean([x['pair_scaled_squared_without_self'] for x in group])), flush=True)
-    stem = f'review_complete_coarsest_{tolerance:g}'
+    stem = f'complete_coarsest_{tolerance:g}'
     with (DEST/(stem+'.csv')).open('w') as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator='\n')
         writer.writeheader(); writer.writerows(rows)
     (DEST/(stem+'_record.json')).write_text(json.dumps(dict(
         L=ref.L, rc=ref.rc, c_s=c_s, tolerance=tolerance, split='C^2 Coulomb split', N=64, trials=len(samples),
         force='AD', influence='full-reference pair-optimal AD force', retained_modes='|k_a|<n/2',
-        reference='Gaussian Ewald alpha=1.3; the configurations of review_complete_si_record.json',
+        reference='Gaussian Ewald alpha=1.3; the configurations of complete_si_record.json',
         grids={str(n): n/unit for n in setups}, tail_rms={str(n): v for n, v in tails.items()},
         kernels=kernels), indent=2)+'\n')
 

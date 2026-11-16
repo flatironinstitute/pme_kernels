@@ -4,4 +4,4 @@ build/
 dist/
 *.egg-info/
 example
-design/records/review_si_coarsest_parts/
+design/records/si_coarsest_parts/

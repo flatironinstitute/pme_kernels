@@ -8,12 +8,12 @@ the ends, and the C^2 problem has no minimizer. A bound |phi'''| <= M
 restores one, because the C^2 kernels with the bound form a compact set in
 C^2. With M = max|B_P'''|, the kernel B_P is admissible.
 
-For P = 4, 5, 6 and the grids s = 1, 2 of review_ad_grids.py (the psi_0
+For P = 4, 5, 6 and the grids s = 1, 2 of ad_grids.py (the psi_0
 split with c_s = 12.024 and n0 = 40), the program minimizes the error over
 N = 16, 24, 32, 40, 48 even PSWFs of bandwidth c_w, for the c_w of the
-24-term C^2 kernel of review_ad_grids.py and for that of the tuned psi_0
+24-term C^2 kernel of ad_grids.py and for that of the tuned psi_0
 kernel:
-- c2: C^2 only, by multistart BFGS as in review_ad_grids.py with more
+- c2: C^2 only, by multistart BFGS as in ad_grids.py with more
   iterations;
 - bounded: C^2 and |phi'''(t)| <= M at 400 points of [0, P/2], by an
   augmented Lagrangian method with BFGS inner solves, in coordinates
@@ -33,12 +33,12 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import leggauss, legder, legval
 
-import review_ad_grids as grids
-import review_finite_grids as design
-from review_complete_si import window_profile
+import ad_grids as grids
+import finite_grids as design
+from complete_si import window_profile
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_si_bounded'
+STEM = 'si_bounded'
 COUNTS = (16, 24, 32, 40, 48)
 # x = 2t/P on [0, 1]; phi''' is odd, and the points cluster at the end of the support.
 POINTS = np.sin(.5*np.pi*np.linspace(0, 1, 400))
@@ -65,7 +65,7 @@ def third_rows(window, x):
 
 
 def whitened_chart(window, s, scale, G=None):
-    # The C^2 chart of review_finite_grids.fit, whitened by the same Gauss-Newton
+    # The C^2 chart of finite_grids.fit, whitened by the same Gauss-Newton
     # metric, plus the mean square of the rows of G if G is given.
     point, Z, leading = window.chart(2)
     reference = point+Z@leading
@@ -84,7 +84,7 @@ def whitened_chart(window, s, scale, G=None):
 
 
 def error(window, a, s, scale):
-    # The stability constraints of review_ad_grids.py.
+    # The stability constraints of ad_grids.py.
     if np.linalg.norm(a) > 10:
         return np.inf, None
     terms, d_terms, f = window.ad_terms(a, s)
@@ -230,8 +230,8 @@ def task(item):
 
 
 def main(workers, selection):
-    record = {(x['P'], x['name']): x for x in json.loads((DEST/'review_ad_grids_record.json').read_text())['fits']}
-    baseline = {(int(r['P']), int(float(r['s']))): r for r in csv.DictReader((DEST/'review_ad_grids.csv').open())}
+    record = {(x['P'], x['name']): x for x in json.loads((DEST/'ad_grids_record.json').read_text())['fits']}
+    baseline = {(int(r['P']), int(float(r['s']))): r for r in csv.DictReader((DEST/'ad_grids.csv').open())}
     items = []
     for P in (4, 5, 6):
         for s in (1, 2):

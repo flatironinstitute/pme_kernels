@@ -1,7 +1,7 @@
 """Truncation error of the psi_0 and C^2 Coulomb splits against the grid size.
 
 For the retained set {k != 0 : |k_a| < n/2}, the mean-square force of the
-truncation error is (3.12) of the review,
+truncation error (Section 3.2 of the paper) is
     sigma_T^2 = L^-6 sum_{k not retained} |xi_k|^2 S_hat(xi_k)^2,
 with S_hat(xi) = 4 pi chi_hat(|xi| r_c)/|xi|^2. The lattice sum is taken over
 spheres |k|^2 <= N, with the number of lattice points on each sphere from a
@@ -10,8 +10,8 @@ added from the large-|xi| form of chi_hat, 2 chi(1) sin(omega)/omega, whose
 square averages to 2 chi(1)^2/omega^2 (zero for the C^2 split, whose density
 vanishes at 1 with its first derivative; its remainder is negligible).
 
-The psi_0 split is that of review_refinement.py (c_s = 12.024, r_c = 1,
-L = 10); the C^2 split is read from review_coulomb_c2_ad_split.json.
+The psi_0 split is that of refinement.py (c_s = 12.024, r_c = 1,
+L = 10); the C^2 split is read from coulomb_c2_ad_split.json.
 NumPy only. Run with OPENBLAS_NUM_THREADS=1.
 """
 import json
@@ -20,11 +20,11 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legval
 
-import review_coulomb_endpoint as endpoint
-import review_refinement as ref
+import coulomb_endpoint as endpoint
+import refinement as ref
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_split_truncation'
+STEM = 'split_truncation'
 SHELLS = 1_000_000          # |k| <= 1000
 GRIDS = list(range(40, 82, 2))
 
@@ -42,7 +42,7 @@ def sphere_counts(maximum):
 
 
 def main():
-    split = json.loads((DEST/'review_coulomb_c2_ad_split.json').read_text())
+    split = json.loads((DEST/'coulomb_c2_ad_split.json').read_text())
     c2 = np.array(split['legendre_coefficients'])
     psi0 = ref.coeff(ref.c)/(2*ref.coeff(ref.c)[0])
     width = max(len(c2), len(psi0))

@@ -3,7 +3,7 @@
 Kernels for particle mesh Ewald (PME) methods, from the paper
 
 > S. Jiang, J. Liang, and L. Lu, *Kernel Design in Particle Mesh Ewald Methods: Splitting, Interpolation, and
-> Upsampling*, 2026.
+> Upsampling*, in preparation (2026).
 
 PME methods compute electrostatic interactions with two kernels: a splitting kernel, which divides the interaction into
 a local part summed over nearby pairs and a smooth part computed on a grid, and a spreading and interpolation (SI)

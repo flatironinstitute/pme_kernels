@@ -1,7 +1,7 @@
-"""Controlled PSWF-sum design on the finite grids of the review.
+"""SI kernels expanded in PSWFs, designed on the grids of a finite box.
 
 NumPy only. Every candidate uses the same band, force weights, exact
-cell alias integral, and pair-optimal influence as review_refinement.py.
+cell alias integral, and pair-optimal influence as refinement.py.
 The optimization is a deterministic multistart BFGS search, not a proof
 of a global optimum. Coefficients and verification residuals are saved.
 """
@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legder, legval
 
-import review_refinement as ref
+import refinement as ref
 
 
 def pswf_basis(c, count=10, size=40):
@@ -263,7 +263,7 @@ def fit(window, grids, scales, order=None, force='spectral', random_starts=3, it
 
 def main():
     dest = Path(__file__).resolve().parent/'records'
-    with (dest/'review_retuned_refinement.csv').open() as stream:
+    with (dest/'retuned_refinement.csv').open() as stream:
         baselines = {(int(row['P']), int(row['s'])): {key: float(value) for key, value in row.items()}
                      for row in csv.DictReader(stream)}
     records, fits = [], []
@@ -319,7 +319,7 @@ def main():
                 window, result, _ = best[name]
                 row[field] = float(np.sqrt(squared_error(window.aliases(result['a'], s)[0])[0]))
             records.append(row); print('SUMMARY', row, flush=True)
-    with (dest/'review_finite_grids.csv').open('w') as stream:
+    with (dest/'finite_grids.csv').open('w') as stream:
         writer = csv.DictWriter(stream, fieldnames=list(records[0]), lineterminator='\n')
         writer.writeheader(); writer.writerows(records)
     metadata = dict(basis='even L2-normalized PSWFs, signs positive at the origin; count gives their number',
@@ -332,12 +332,12 @@ def main():
                     influence='pair-optimal for the same truncated spherical reference',
                     optimizer='multistart BFGS with analytic gradients; no global-optimality certificate',
                     fits=fits)
-    (dest/'review_finite_grids_record.json').write_text(json.dumps(metadata, indent=2)+'\n')
+    (dest/'finite_grids_record.json').write_text(json.dumps(metadata, indent=2)+'\n')
 
 
 def verify_selected():
     dest = Path(__file__).resolve().parent/'records'
-    data = json.loads((dest/'review_finite_grids_record.json').read_text())
+    data = json.loads((dest/'finite_grids_record.json').read_text())
     worst, minimum = 0., float('inf')
     for item in data['fits']:
         P, c = item['P'], item['cw']; a = np.array(item['coefficients'])
@@ -373,7 +373,7 @@ def verify_selected():
                         maximum_relative_RMS_change=worst, minimum_dense_working_response=minimum,
                         directional_gradient_relative_error=float(discrepancy))
     print('VERIFICATION', verification, flush=True)
-    (dest/'review_finite_grids_verification.json').write_text(json.dumps(verification, indent=2)+'\n')
+    (dest/'finite_grids_verification.json').write_text(json.dumps(verification, indent=2)+'\n')
 
 
 if __name__ == '__main__':

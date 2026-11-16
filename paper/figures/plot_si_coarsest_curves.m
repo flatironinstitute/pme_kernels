@@ -1,17 +1,17 @@
 function plot_si_coarsest_curves()
 %PLOT_SI_COARSEST_CURVES Relative AD aliasing error against the grid ratio s.
 % For the tolerances 1e-4 (P = 4, 5, 6) and 1e-8 (P = 7, 8, 10): the kernel
-% of review_si_coarsest.py for each order and tolerance and B_P, in the
+% of si_coarsest.py for each order and tolerance and B_P, in the
 % limit of large boxes, and the psi_0 kernel with its bandwidth tuned on
-% each grid, in a box of side 10 r_c (review_si_coarsest_curves.csv). The dotted line is the tolerance, and
+% each grid, in a box of side 10 r_c (si_coarsest_curves.csv). The dotted line is the tolerance, and
 % the markers are the coarsest ratios s* of the kernel, of B_P, and of the
-% psi_0 kernel in the box (review_si_coarsest_record.json). Errors below
+% psi_0 kernel in the box (si_coarsest_record.json). Errors below
 % 1e-11, near the floor of their computation, are not shown. Styles of
 % paper_figure_style.m.
 here=fileparts(mfilename('fullpath')); out=fullfile(here,'..','..','design','records');
 S=paper_figure_style();
-R=readtable(fullfile(out,'review_si_coarsest_curves.csv'));
-data=jsondecode(fileread(fullfile(out,'review_si_coarsest_record.json')));
+R=readtable(fullfile(out,'si_coarsest_curves.csv'));
+data=jsondecode(fileread(fullfile(out,'si_coarsest_record.json')));
 if iscell(data.results),results=data.results;else,results=num2cell(data.results);end
 methods={'spline','prolate','design'};keys={'spline_sigma','prolate_sigma','sigma'};
 names={'$B_P$','$\psi_0$ kernel','$\phi_P^*$'};
@@ -52,7 +52,7 @@ for i=1:size(panels,1)
 end
 key=legend(handles,names,'NumColumns',3,'FontSize',9);key.Layout.Tile='south';
 light_style(f);
-exportgraphics(f,fullfile(here,'review_si_coarsest_curves.pdf'),'ContentType','vector');close(f);
+exportgraphics(f,fullfile(here,'si_coarsest_curves.pdf'),'ContentType','vector');close(f);
 end
 
 function light_style(f)

@@ -1,10 +1,10 @@
 function plot_si_kernels()
 %PLOT_SI_KERNELS Shapes phi(t) and transforms |phi_hat(q)| of the SI kernels, q = h xi.
 % B_P, the psi_0 kernel tuned on the grid, and the optimized kernel of
-% review_si_coarsest.py, for P = 5 at the tolerance 1e-3 and P = 4 at 1e-4,
-% each on the coarsest grid s of the optimized kernel (review_si_figures.py:
-% review_si_kernels_space.csv, review_si_kernels_frequency.csv,
-% review_si_figures.json). Each kernel has unit integral. The dot marks the
+% si_coarsest.py, for P = 5 at the tolerance 1e-3 and P = 4 at 1e-4,
+% each on the coarsest grid s of the optimized kernel (si_figures.py:
+% si_kernels_space.csv, si_kernels_frequency.csv,
+% si_figures.json). Each kernel has unit integral. The dot marks the
 % value from which the psi_0 kernel jumps to zero at t = P/2. In the
 % transforms, the retained band |q| <= pi/s is shaded dark and its aliases
 % around 2 pi m light; the dotted lines mark the Nyquist frequency q = pi and
@@ -13,9 +13,9 @@ function plot_si_kernels()
 % paper_figure_style.m.
 here=fileparts(mfilename('fullpath')); out=fullfile(here,'..','..','design','records');
 S=paper_figure_style();
-X=readtable(fullfile(out,'review_si_kernels_space.csv'));
-F=readtable(fullfile(out,'review_si_kernels_frequency.csv'));
-info=jsondecode(fileread(fullfile(out,'review_si_figures.json')));
+X=readtable(fullfile(out,'si_kernels_space.csv'));
+F=readtable(fullfile(out,'si_kernels_frequency.csv'));
+info=jsondecode(fileread(fullfile(out,'si_figures.json')));
 names={'spline','prolate','design'};
 cases={'P5','P4'};
 % About 450 pt wide, so that 10-point text prints at about 8 points in the 5.125-inch column.
@@ -75,7 +75,7 @@ end
 key=legend(handles,{'$B_P$','$\psi_0$ kernel','$\phi_P^*$'},'NumColumns',3,'FontSize',9);
 key.Layout.Tile='south';
 light_style(f);
-exportgraphics(f,fullfile(here,'review_si_kernels.pdf'),'ContentType','vector');close(f);
+exportgraphics(f,fullfile(here,'si_kernels.pdf'),'ContentType','vector');close(f);
 end
 
 function shade(a,b,color,bottom,top)

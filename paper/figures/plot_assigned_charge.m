@@ -2,13 +2,13 @@ function plot_assigned_charge()
 %PLOT_ASSIGNED_CHARGE Charge that a unit charge assigns to the grid, P = 4.
 % The deviation S(y_alpha/h)-1 of S(y_alpha/h) = sum_l phi(l-y_alpha/h) and its
 % derivative over one grid cell for the cubic B-spline, the tuned psi_0
-% kernel, and the kernel of review_si_coarsest.py for the tolerance 1e-4,
-% as computed by review_si_coarsest.py --charge (review_assigned_charge.csv).
+% kernel, and the kernel of si_coarsest.py for the tolerance 1e-4,
+% as computed by si_coarsest.py --charge (assigned_charge.csv).
 % Styles of paper_figure_style.m.
 here=fileparts(mfilename('fullpath')); out=fullfile(here,'..','..','design','records');
 S=paper_figure_style();
-T=readtable(fullfile(out,'review_assigned_charge.csv'));
-info=jsondecode(fileread(fullfile(out,'review_assigned_charge.json')));
+T=readtable(fullfile(out,'assigned_charge.csv'));
+info=jsondecode(fileread(fullfile(out,'assigned_charge.json')));
 names={'spline','prolate','design'};
 % The bandwidth of the psi_0 kernel, info.prolate_cw, is given in the caption.
 labels={'$B_4$','$\psi_0$ kernel','$\phi_4^*$'};
@@ -46,7 +46,7 @@ end
 key=legend(handles,labels,'NumColumns',3,'FontSize',9);
 key.Layout.Tile='south';
 light_style(f);
-exportgraphics(f,fullfile(here,'review_assigned_charge.pdf'),'ContentType','vector');close(f);
+exportgraphics(f,fullfile(here,'assigned_charge.pdf'),'ContentType','vector');close(f);
 end
 
 function light_style(f)

@@ -1,7 +1,7 @@
-"""SI kernels designed for AD forces on the finite grids of the review.
+"""SI kernels designed for AD forces on the grids of a finite box.
 
 NumPy only. The band, force weights, exact cell alias integrals and
-pair-optimal influence are those of review_finite_grids.py. The force
+pair-optimal influence are those of finite_grids.py. The force
 differentiates the interior polynomial of the SI kernel, as MD codes do
 (analytic differentiation, AD). The baselines are B_P and the leading
 prolate with its bandwidth retuned for AD. The optimization is a
@@ -17,9 +17,9 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import leggauss, legder, legval
 
-import review_finite_grids as design
-import review_refinement as ref
-from review_complete_si import window_profile
+import finite_grids as design
+import refinement as ref
+from complete_si import window_profile
 
 
 DEST = Path(__file__).resolve().parent/'records'
@@ -45,7 +45,7 @@ def spectral_error(window, a, s):
 
 
 def spline_error(P, s, nq=160, base=None, band=None):
-    # base, band: the band coordinates on the base grid and the band of review_finite_grids, by default.
+    # base, band: the band coordinates on the base grid and the band of finite_grids, by default.
     # B_P' = B_{P-1}(x+1/2)-B_{P-1}(x-1/2); B_P is continuous, so the endpoint term is zero.
     cell = ref.Cell(P, (design.qbase if base is None else base)/s, nq)
     q = cell.q
@@ -77,9 +77,9 @@ def fit_bandwidth(task):
 
 def main(workers):
     baselines = {(int(r['P']), int(r['s'])): {k: float(v) for k, v in r.items()}
-                 for r in csv.DictReader((DEST/'review_retuned_refinement.csv').open())}
+                 for r in csv.DictReader((DEST/'retuned_refinement.csv').open())}
     spectral = {(x['P'], x['name']): x for x in
-                json.loads((DEST/'review_finite_grids_record.json').read_text())['fits']}
+                json.loads((DEST/'finite_grids_record.json').read_text())['fits']}
     tasks = []
     for P in (4, 5, 6):
         scales = {s: baselines[P, s]['pro']**2 for s in (1, 2)}
@@ -145,7 +145,7 @@ def main(workers):
                 row[field] = ad_error(design.Window(P, x['cw'], x['count']), np.array(x['coefficients']), s)
             records.append(row)
             print('SUMMARY', row, flush=True)
-    with (DEST/'review_ad_grids.csv').open('w') as stream:
+    with (DEST/'ad_grids.csv').open('w') as stream:
         writer = csv.DictWriter(stream, fieldnames=list(records[0]), lineterminator='\n')
         writer.writeheader(); writer.writerows(records)
     metadata = dict(force='AD: the analytic derivative of the interior polynomial of the SI kernel',
@@ -158,9 +158,9 @@ def main(workers):
                     prolate_search='0.3 to 2.5 times pi P, 111 points, golden-section refinement at each local minimum',
                     stability='f(q)>=1e-3 at all retained coordinates, coefficient norm <=10',
                     optimizer='multistart BFGS with analytic gradients, 12 random starts, 600 iterations; no global-optimality certificate',
-                    spectral_columns='kernels of review_finite_grids_record.json (sum and c2), evaluated with AD',
+                    spectral_columns='kernels of finite_grids_record.json (sum and c2), evaluated with AD',
                     fits=fits)
-    (DEST/'review_ad_grids_record.json').write_text(json.dumps(metadata, indent=2)+'\n')
+    (DEST/'ad_grids_record.json').write_text(json.dumps(metadata, indent=2)+'\n')
 
 
 def independent_error(P, c, a, s, size=80, nq=160):
@@ -184,7 +184,7 @@ def independent_error(P, c, a, s, size=80, nq=160):
 
 
 def verify():
-    data = json.loads((DEST/'review_ad_grids_record.json').read_text())
+    data = json.loads((DEST/'ad_grids_record.json').read_text())
     worst = 0.
     for item in data['fits']:
         for s in (1, 2):
@@ -211,7 +211,7 @@ def verify():
     verification = dict(shapes=len(data['fits']), verification_legendre_size=80, verification_quadrature=160,
                         maximum_relative_RMS_change=worst, directional_gradient_relative_error=float(gradient_error))
     print('VERIFICATION', verification, flush=True)
-    (DEST/'review_ad_grids_verification.json').write_text(json.dumps(verification, indent=2)+'\n')
+    (DEST/'ad_grids_verification.json').write_text(json.dumps(verification, indent=2)+'\n')
 
 
 if __name__ == '__main__':

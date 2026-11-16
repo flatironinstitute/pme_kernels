@@ -1,7 +1,7 @@
 """Write data/ from the records of the design programs.
 
-records/review_inverse_splits_record.json (review_inverse_splits.py) gives the C^2 splits of 1/r^nu, nu = 1, ..., 6;
-records/review_si_coarsest_record.json (review_si_coarsest.py) gives the optimized SI kernels. This program writes
+records/inverse_splits_record.json (inverse_splits.py) gives the C^2 splits of 1/r^nu, nu = 1, ..., 6;
+records/si_coarsest_record.json (si_coarsest.py) gives the optimized SI kernels. This program writes
 data/splits/c2_splits.json, data/si/si_kernels.json, and the tables data/tables/phi_P{P}_eps{eps}.txt (values and first
 two derivatives of each SI kernel at 128 equal parts of every grid interval, as in Section 4.7 of the paper).
 """
@@ -26,7 +26,7 @@ def trim(coefficients):
 
 
 def splits():
-    rows = json.loads((RECORDS/'review_inverse_splits_record.json').read_text())['rows']
+    rows = json.loads((RECORDS/'inverse_splits_record.json').read_text())['rows']
     out = []
     for r in sorted((r for r in rows if r['d'] == 2), key=lambda r: (r['nu'], -r['tolerance'])):
         out.append(dict(nu=r['nu'], tolerance=r['tolerance'], c_s=r['c'], terms=r['terms'],
@@ -48,7 +48,7 @@ def splits():
 
 
 def si_kernels():
-    results = json.loads((RECORDS/'review_si_coarsest_record.json').read_text())['results']
+    results = json.loads((RECORDS/'si_coarsest_record.json').read_text())['results']
     out = []
     for r in sorted((r for r in results if r.get('sigma') is not None), key=lambda r: (-r['tolerance'], r['P'])):
         out.append(dict(P=r['P'], tolerance=r['tolerance'], c_s=r['c_s'], s_star=r['sigma'],

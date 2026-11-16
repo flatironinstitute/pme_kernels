@@ -5,12 +5,12 @@ and only if chi(1) = chi'(1) = 0 (Proposition 3.1), and the C^2 split uses
 the fewest even PSWFs that admit these m = 2 conditions, psi_0^c, psi_2^c,
 psi_4^c: the conditions leave one direction, and the profile is normalized
 by int chi = 1. The coefficients are proportional to
-1/(psi_2i(1) prod_{k != i}(gamma_2i - gamma_2k)) (Theorem 3.2), which the
+1/(psi_2i(1) prod_{k != i}(gamma_2i - gamma_2k)) (Theorem 3.3), which the
 program checks against the null vector of the conditions. Other powers:
-review_inverse_splits.py.
+inverse_splits.py.
 
 For each tolerance eps = 1e-2, ..., 1e-8 and the bandwidth c of ESP's rule
-chi(1) = eps for the psi_0 split (review_si_coarsest.bandwidth), the program
+chi(1) = eps for the psi_0 split (si_coarsest.bandwidth), the program
 reports:
 - the PSWF coefficients relative to the first, and their largest relative
   difference from the closed form;
@@ -34,14 +34,14 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legder, leggauss, legmulx, legval
 
-import review_coulomb_endpoint as endpoint
-import review_cutoff_jumps as jumps
-import review_finite_grids as design
-import review_refinement as ref
-import review_split_truncation as truncation
+import coulomb_endpoint as endpoint
+import cutoff_jumps as jumps
+import finite_grids as design
+import refinement as ref
+import split_truncation as truncation
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_c2_split_fewest'
+STEM = 'c2_split_fewest'
 TOLERANCES = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8)
 SHELLS = 1_000_000
 
@@ -52,7 +52,7 @@ def conditions(nu):
 
 def fewest(c, nu):
     if nu != 1:
-        raise ValueError('the splits of other powers are review_inverse_splits.split')
+        raise ValueError('the splits of other powers are inverse_splits.split')
     m = conditions(nu)
     basis = design.pswf_basis(c, count=m+1, size=60)
     E = np.array([legval(1., legder(basis.T, j)) for j in range(m)])
@@ -129,8 +129,8 @@ def crossing(x, a, b):
 
 
 def main():
-    import review_inverse_splits as powers
-    import review_si_coarsest as co
+    import inverse_splits as powers
+    import si_coarsest as co
     t = np.linspace(-1, 1, 4001)
     out = []
     for tolerance in TOLERANCES:
@@ -159,7 +159,7 @@ def main():
         print({k: (f'{v:.4g}' if isinstance(v, float) else v) for k, v in item.items()
                if k not in ('coefficients', 'legendre_coefficients', 'truncation', 'relative_coefficients')},
               'rel coeff', [f'{x:.2e}' for x in item['relative_coefficients']], flush=True)
-    (DEST/'review_c2_split_coulomb_record.json').write_text(json.dumps(dict(
+    (DEST/'c2_split_coulomb_record.json').write_text(json.dumps(dict(
         L=ref.L, rc=ref.rc, bandwidth="ESP's rule chi(1) = eps for the psi_0 split", splits=out), indent=2)+'\n')
 
 

@@ -1,8 +1,8 @@
 """SI kernels that meet a tolerance on the coarsest grid.
 
-For a tolerance eps, the C^2 Coulomb split (review_c2_split_fewest.py) has the bandwidth c_s of ESP's rule
+For a tolerance eps, the C^2 Coulomb split (c2_split_fewest.py) has the bandwidth c_s of ESP's rule
 chi(1) = eps for the psi_0 split, with r_c = 1. A grid of spacing h is described by the ratio sigma = (pi/h)/(c_s/r_c)
-of its Nyquist frequency to the band edge; in the variable q = h xi of review_ad_grids.py, the band model depends on
+of its Nyquist frequency to the band edge; in the variable q = h xi of ad_grids.py, the band model depends on
 the grid only through sigma. ESP's rule gives sigma >= 1, close to one in large boxes; sigma = 1 is the smallest
 ratio considered here.
 
@@ -13,7 +13,7 @@ trapezoid rule; for every kernel, sphere() gives a spherical product rule, refin
 the band for the psi_0 kernel, whose relative error there tends to one. In a box of side L, the band is the lattice
 of the box's wavenumbers, and the error of the psi_0 kernel grows with L.
 
-For each order P, the kernel phi = B_2 * g of review_si_design.FactoredWindow (g an expansion in even PSWFs; C^2,
+For each order P, the kernel phi = B_2 * g of si_design.FactoredWindow (g an expansion in even PSWFs; C^2,
 phi' <= 0 on [0, P/2], |phi'''| <= max|B_P'''|) minimizes E(phi; sigma) on one grid; E*(sigma) is the minimum. The
 coarsest ratio sigma*(P, eps) is the smallest sigma >= 1 with E*(sigma) <= eps, and the kernel of order P for the
 tolerance eps is the minimizer on that grid. Since B_P = B_2 * B_{P-2} is admissible, E*(sigma) <= E(B_P; sigma) and
@@ -34,14 +34,14 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legder, leggauss, legval
 
-import review_ad_grids as grids
-import review_c2_split_fewest as splits
-import review_refinement as ref
-import review_si_design as d
-from review_complete_si import factored
+import ad_grids as grids
+import c2_split_fewest as splits
+import refinement as ref
+import si_design as d
+from complete_si import factored
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_si_coarsest'
+STEM = 'si_coarsest'
 TOLERANCES = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8)
 ORDERS = (4, 5, 6, 7, 8, 9, 10)
 SIGMA_MIN, SIGMA_MAX, STEP = 1., 4., 1.1
@@ -163,7 +163,7 @@ def kernel_parts(P, kind, c=None, g=None):
 
 def terms(P, q, parts, nu=80, chunk=40000, cuts=None):
     """The per-coordinate inputs (alias, eps, eta) of ad_squared_error at the coordinates q, and the transform, by
-    the cell integrals of review_finite_grids.Window.ad_terms, with exp(i q (l-u)) factored as exp(i q l) exp(-i q u).
+    the cell integrals of finite_grids.Window.ad_terms, with exp(i q (l-u)) factored as exp(i q l) exp(-i q u).
     A fifth element of parts, if present, gives v(q) = -int phi'(t) sin(q t) dt for the derivative used inside the
     support, for kernels such as piecewise polynomial tables that can jump between the ends of the support. The cell
     integrals use nu Gauss points between consecutive cuts, the points of the cell at which the kernels of the stencil
@@ -197,7 +197,7 @@ def terms(P, q, parts, nu=80, chunk=40000, cuts=None):
 
 def evaluate(P, sigma, data, parts, nu=80, cuts=None, floor=d.FLOOR):
     """E(phi; sigma) on the band data = (c_s, q, (index, weights)) of band() or sphere(); infinite if phi_hat falls
-    below floor on the band (by default the numerical barrier of review_si_design)."""
+    below floor on the band (by default the numerical barrier of si_design)."""
     _, q, b = data
     alias, eps, eta, f = terms(P, q/sigma, parts, nu, cuts=cuts)
     if f.min() < floor:
@@ -442,11 +442,11 @@ def assigned_charge(eps=1e-4, P=4, n=2000):
         phi, dphi = parts[0], parts[1]
         columns[name+'_S'] = np.sum(phi(x)*inside, axis=0)-1
         columns[name+'_dS'] = -np.sum(dphi(x)*inside, axis=0)
-    with (DEST/'review_assigned_charge.csv').open('w') as stream:
+    with (DEST/'assigned_charge.csv').open('w') as stream:
         writer = csv.writer(stream, lineterminator='\n')
         writer.writerow(list(columns))
         writer.writerows(np.array(list(columns.values())).T.tolist())
-    (DEST/'review_assigned_charge.json').write_text(json.dumps(dict(tolerance=eps, P=P, prolate_cw=r['cw'], **{
+    (DEST/'assigned_charge.json').write_text(json.dumps(dict(tolerance=eps, P=P, prolate_cw=r['cw'], **{
         k+'_max': float(np.max(np.abs(v))) for k, v in columns.items() if k != 'theta'}), indent=1)+'\n')
 
 
@@ -555,7 +555,7 @@ def checks(steps=24):
     smallest phi_hat on the band |q| <= pi/s* and on |q| <= pi, and its errors on the grids s* (4/s*)^(k/steps),
     k = 0, ..., steps, which show whether it stays below the tolerance on every finer grid up to s = 4; and whether
     the minima sampled in the search for s* decrease with s."""
-    import review_si_bounded as bounded
+    import si_bounded as bounded
     record = json.loads((DEST/(STEM+'_record.json')).read_text())
     rows = []
     for r in record['results']:

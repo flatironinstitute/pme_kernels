@@ -15,13 +15,13 @@ from pathlib import Path
 import numpy as np
 from numpy.polynomial.legendre import legder, leggauss, legval
 
-import review_complete_si as complete
-import review_finite_grids as design
-import review_refinement as ref
+import complete_si as complete
+import finite_grids as design
+import refinement as ref
 
 
 DEST = Path(__file__).resolve().parent/'records'
-STEM = 'review_coulomb_endpoint'
+STEM = 'coulomb_endpoint'
 
 
 def validation_fingerprint(fits, spline_fits, baselines, configurations):
@@ -108,7 +108,7 @@ def probe_windows(n, objective):
         return [(6, None)]
     if objective == 'tail':
         return [None]
-    fits = json.loads((DEST/'review_finite_grids_record.json').read_text())['fits']
+    fits = json.loads((DEST/'finite_grids_record.json').read_text())['fits']
     return [(P, np.array(next(x for x in fits if x['P'] == P and x['name'] == f'c2_s{n//40}')['legendre_coefficients']))
             for P in (4, 5, 6)]
 
@@ -170,11 +170,11 @@ def construct_split(grids=(80,), order=1, count=4, max_alias=4, objective='b6'):
 
 def validate(result, reuse=False):
     co_split = np.array(result['legendre_coefficients'])
-    fits = json.loads((DEST/'review_finite_grids_record.json').read_text())['fits']
+    fits = json.loads((DEST/'finite_grids_record.json').read_text())['fits']
     spline_fits = {(int(x['P']), x['name']): float(x['beta'])
-                   for x in csv.DictReader((DEST/'review_spline_derivative.csv').open())}
-    baselines = {(int(x['P']), int(x['s'])): x for x in csv.DictReader((DEST/'review_retuned_refinement.csv').open())}
-    configurations = json.loads((DEST/'review_complete_si_record.json').read_text())['configurations']
+                   for x in csv.DictReader((DEST/'spline_derivative.csv').open())}
+    baselines = {(int(x['P']), int(x['s'])): x for x in csv.DictReader((DEST/'retuned_refinement.csv').open())}
+    configurations = json.loads((DEST/'complete_si_record.json').read_text())['configurations']
     inputs_digest = validation_fingerprint(fits, spline_fits, baselines, configurations)
     samples = []
     for item in configurations:
@@ -202,7 +202,7 @@ def validate(result, reuse=False):
     (DEST/(STEM+'_record.json')).write_text(json.dumps(dict(
         split=result, configurations=16, validation_grids=[40, 80],
         validation_inputs_sha256=inputs_digest,
-        same_configurations_as='review_complete_si_record.json',
+        same_configurations_as='complete_si_record.json',
         shape_selection='unchanged fixed-band SI shapes at each validation grid; full-reference influence recomputed',
         checks=checks), indent=2)+'\n')
 
@@ -267,7 +267,7 @@ if __name__ == '__main__':
                         help='reuse the saved split and previously evaluated grid/window cases')
     args = parser.parse_args()
     if args.order > 1:
-        STEM = f'review_coulomb_c{args.order}'
+        STEM = f'coulomb_c{args.order}'
     if sorted(args.design_grid) == [40]:
         STEM += '_coarse'
     elif sorted(args.design_grid) == [40, 80]:

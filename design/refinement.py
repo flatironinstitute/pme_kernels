@@ -119,7 +119,7 @@ if __name__=='__main__':
             rec=dict(P=P,s=scale,B=bs,pro=val,cw=cw,natural=natural,fixed=fixed,hybrid=hybrid,quad_rel=err)
             records.append(rec)
             print(rec,flush=True)
-    with (dest/'review_retuned_refinement.csv').open('w') as f:
+    with (dest/'retuned_refinement.csv').open('w') as f:
         out=csv.DictWriter(f,fieldnames=list(records[0]),lineterminator="\n");out.writeheader();out.writerows(records)
     one=[]
     for scale in 2.**np.arange(7):
@@ -128,7 +128,7 @@ if __name__=='__main__':
         one.append(dict(s=int(scale),B=float(one_rms(bspline_alias(q,4))[0]),
                         fixed=float(one_rms(cell.alias(9.))[0]),pro=val,cw=cw,
                         hybrid=float(one_rms(convolution_alias(q))[0])))
-    with (dest/'review_one_mode.csv').open('w') as f:
+    with (dest/'one_mode.csv').open('w') as f:
         out=csv.DictWriter(f,fieldnames=list(one[0]),lineterminator="\n");out.writeheader();out.writerows(one)
     # This is an independent check against the existing MATLAB cell calculation.
     A9=Cell(4,np.array([0.])).alias(9.)[0]
@@ -139,4 +139,4 @@ if __name__=='__main__':
                   bandwidth_search=[0,1.3*np.pi],bandwidth_search_units='P',
                   cell_quadrature=80,verification_quadrature=160,pswf_even_basis_size=40,
                   maximum_quad_relative_difference=worst_quad,one_mode_cw9_floor_alias=A9)
-    (dest/'review_refinement_record.json').write_text(json.dumps(metadata,indent=2)+'\n')
+    (dest/'refinement_record.json').write_text(json.dumps(metadata,indent=2)+'\n')
