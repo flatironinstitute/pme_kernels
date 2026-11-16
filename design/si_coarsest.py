@@ -1,7 +1,8 @@
 """SI kernels that meet a tolerance on the coarsest grid.
 
-For a tolerance eps, the C^2 Coulomb split (c2_split_fewest.py) has the bandwidth c_s of ESP's rule
-chi(1) = eps for the psi_0 split, with r_c = 1. A grid of spacing h is described by the ratio sigma = (pi/h)/(c_s/r_c)
+For a tolerance eps, the C^2 Coulomb split (c2_split_fewest.py) has the bandwidth c_s of c2_bandwidth: ESP's
+rule chi(1) = eps for the psi_0 split, raised where needed so that the truncation error of the split is at most eps,
+with r_c = 1. A grid of spacing h is described by the ratio sigma = (pi/h)/(c_s/r_c)
 of its Nyquist frequency to the band edge; in the variable q = h xi of ad_grids.py, the band model depends on
 the grid only through sigma. ESP's rule gives sigma >= 1, close to one in large boxes; sigma = 1 is the smallest
 ratio considered here.
@@ -28,6 +29,7 @@ only. Run with OPENBLAS_NUM_THREADS=1.
 import json
 import sys
 import time
+from functools import lru_cache
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -63,6 +65,28 @@ def bandwidth(eps):
     return .5*(lo+hi)
 
 
+@lru_cache(maxsize=None)
+def c2_bandwidth(eps):
+    """The bandwidth of the C^2 Coulomb split for the tolerance eps: ESP's bandwidth, raised where needed so that the
+    relative truncation error of the split in the limit of large boxes (inverse_splits.truncation) is at most
+    eps, which happens for eps >= 1e-3."""
+    import inverse_splits as powers
+
+    def excess(c):
+        _, profile, _, _ = splits.fewest(c, 1)
+        return np.log(powers.truncation(profile, 1, c, 2)[0]/eps)
+    lo = bandwidth(eps)
+    if excess(lo) <= 0:
+        return lo
+    hi = 1.02*lo
+    while excess(hi) > 0:
+        hi *= 1.02
+    for _ in range(40):
+        mid = .5*(lo+hi)
+        lo, hi = (mid, hi) if excess(mid) > 0 else (lo, mid)
+    return hi
+
+
 def chi_transform(c):
     """The transform chi_hat(omega) of the profile of the C^2 split with bandwidth c, normalized by chi_hat(0) = 1."""
     _, profile, _, _ = splits.fewest(c, 1)
@@ -82,7 +106,7 @@ def band(eps, R=80., L=None):
     integrand to vanish at the bottom of the band, as it does for kernels whose translates conserve charge and dipole.
     In the variable q = h xi, the band is the lattice (pi/(R sigma)) k, |k| <= R. Returns c_s, the coordinates q on
     the grid sigma = 1, and the classes of modes under permutations and sign changes (sorted triples) with weights."""
-    c = bandwidth(eps)
+    c = c2_bandwidth(eps)
     if L is not None:
         R = c*L/(2*np.pi*ref.rc)
     K = int(np.floor(R))
@@ -124,7 +148,7 @@ def sphere(eps, depth=12, uniform=16, nr=10, na=16, floor=0.):
     their weights. The psi_0 kernel needs depth = 40, since its relative error tends to one at the bottom of the band;
     for kernels whose translates conserve charge and dipole, the integrand is O(rho^2) there. With floor > 0, the rule
     covers only the radii floor <= |xi|/(c_s/r_c) <= 1, as the modes of a box of side 2 pi r_c/(c_s floor) do."""
-    c = bandwidth(eps)
+    c = c2_bandwidth(eps)
     chi = chi_transform(c)
     breaks = np.array(sorted({floor} | {x for x in [2.**-j/uniform for j in range(1, depth+1)] if x > floor}
                              | {k/uniform for k in range(1, uniform+1)}))
@@ -412,7 +436,7 @@ def growth(cases=((1e-4, 4), (1e-4, 6), (1e-6, 6)), sides=(10., 1e2, 1e3, 1e4, 1
     rows = []
     for eps, P in cases:
         sigma = record[eps, P]['sigma']
-        c = bandwidth(eps)
+        c = c2_bandwidth(eps)
         cw = tune(P, sigma, band(eps, L=BOX))[0]
         parts = kernel_parts(P, 'prolate', c=cw)
         # The integral of |S'|^2 over a cell: the excess derivative alias power at q = 0.

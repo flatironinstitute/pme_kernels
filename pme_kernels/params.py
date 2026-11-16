@@ -1,7 +1,8 @@
 """Choosing the parameters (Section 4.7 of the paper).
 
 A requested tolerance eps, a cutoff r_c, and an order P determine the method: eps fixes the splitting bandwidth c_s
-(ESP's rule chi(1) = eps), eps and P fix the optimized kernel phi_P^* and its coarsest grid ratio s*, hence the grid
+(ESP's rule chi(1) = eps, raised at 1e-2 and 1e-3 so that the truncation error of the C^2 split meets eps), eps
+and P fix the optimized kernel phi_P^* and its coarsest grid ratio s*, hence the grid
 spacing h = pi r_c/(c_s s*); a box of side L takes the first grid with at least L/h points in each dimension that the
 FFT handles efficiently.
 """
@@ -11,8 +12,10 @@ from .si import SIKernel
 
 
 def bandwidth(eps):
-    """An approximation of ESP's splitting bandwidth, c_s = ln(1/eps) + 0.86 ln ln(1/eps) + 0.91, which reproduces the
-    tabulated values to within 0.01 for eps from 1e-2 to 1e-8. The kernels of the data carry the exact values."""
+    """An approximation of ESP's splitting bandwidth, c_s = ln(1/eps) + 0.86 ln ln(1/eps) + 0.91, which reproduces
+    ESP's rule chi(1) = eps to within 0.01 for eps from 1e-2 to 1e-8. The C^2 splits use this bandwidth from 1e-4 on
+    and a slightly larger one at 1e-2 and 1e-3, so that their truncation error meets the tolerance; the kernels and
+    splits of the data carry the exact values."""
     x = math.log(1/eps)
     return x+0.86*math.log(x)+0.91
 

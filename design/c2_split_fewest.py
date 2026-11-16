@@ -134,11 +134,13 @@ def main():
     t = np.linspace(-1, 1, 4001)
     out = []
     for tolerance in TOLERANCES:
+        # The psi_0 split and the grid that ESP uses have ESP's bandwidth; the C^2 split has its own (c2_bandwidth).
         c = co.bandwidth(tolerance)
-        a, profile, basis, residual = fewest(c, 1)
-        closed, _ = powers.closed_form(c, 2)
+        c2 = co.c2_bandwidth(tolerance)
+        a, profile, basis, residual = fewest(c2, 1)
+        closed, _ = powers.closed_form(c2, 2)
         lead = leading(c, 1)
-        item = dict(tolerance=tolerance, c=c, nu=1, terms=len(a),
+        item = dict(tolerance=tolerance, c=c2, c_esp=c, nu=1, terms=len(a),
                     coefficients=a.tolist(), relative_coefficients=(a/a[0]).tolist(),
                     closed_form_difference=float(np.max(np.abs(closed/closed[0]-a/a[0])/np.abs(a/a[0]))),
                     legendre_coefficients=profile.tolist(), constraint_residual=residual,
@@ -160,7 +162,9 @@ def main():
                if k not in ('coefficients', 'legendre_coefficients', 'truncation', 'relative_coefficients')},
               'rel coeff', [f'{x:.2e}' for x in item['relative_coefficients']], flush=True)
     (DEST/'c2_split_coulomb_record.json').write_text(json.dumps(dict(
-        L=ref.L, rc=ref.rc, bandwidth="ESP's rule chi(1) = eps for the psi_0 split", splits=out), indent=2)+'\n')
+        L=ref.L, rc=ref.rc, bandwidth="psi_0 split and base grid: ESP's rule chi(1) = eps (c_esp); C^2 split: "
+        "c2_bandwidth (c), ESP's bandwidth raised where needed so that its truncation error is at most eps",
+        splits=out), indent=2)+'\n')
 
 
 if __name__ == '__main__':

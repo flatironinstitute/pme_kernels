@@ -7,7 +7,8 @@ is d times continuously differentiable at t = 1 if and only if R_nu^(j)(1) = 0 f
 d conditions for nu = 1, where R_1(1) = 0, and d + 1 for nu >= 2. The C^d split uses the fewest even PSWFs
 psi_0^c, ..., psi_2m^c that admit the m conditions.
 
-For each nu, d = 2, 3, 4, and each tolerance eps with the bandwidth c of ESP's rule chi(1) = eps (si_coarsest),
+For each nu, d = 2, 3, 4, and each tolerance eps with the bandwidth c of the C^2 Coulomb split (si_coarsest.
+c2_bandwidth: ESP's rule chi(1) = eps, raised where needed so that the C^2 Coulomb split meets eps), one for all nu,
 the program reports:
 - the coefficients of the profile relative to the first and its minimum on [0, 1];
 - the jump at the cutoff of the derivative of order d + 1 of the local part, relative to that of t^-nu;
@@ -224,6 +225,7 @@ def main():
     grid = np.linspace(0, 1, 2001)
     for eps in TOLERANCES:
         c = co.bandwidth(eps)
+        c2 = co.c2_bandwidth(eps)
         lead = F.leading(c, 2)
         for nu in POWERS:
             # The psi_0 split: for nu = 1 the force jumps, for nu >= 2 the local part itself, and then the relative
@@ -233,16 +235,17 @@ def main():
                         psi0_truncation=trunc, psi0_tail_fraction=tail)
             rows.append(item)
             for d in ORDERS:
-                a, profile, constraint = split(c, nu, d)
-                trunc, tail = truncation(profile, nu, c, d)
-                rows.append(dict(tolerance=eps, c=c, nu=nu, d=d, terms=len(a), relative_coefficients=(a/a[0]).tolist(),
+                a, profile, constraint = split(c2, nu, d)
+                trunc, tail = truncation(profile, nu, c2, d)
+                rows.append(dict(tolerance=eps, c=c2, nu=nu, d=d, terms=len(a), relative_coefficients=(a/a[0]).tolist(),
                                  legendre_coefficients=profile.tolist(), constraint_residual=constraint,
                                  minimum=float(legval(grid, profile).min()), jump=jump(profile, nu, d+1),
                                  truncation=trunc, tail_fraction=tail))
                 print({k: (f'{v:.3e}' if isinstance(v, float) else v) for k, v in rows[-1].items()
                        if k not in ('relative_coefficients', 'legendre_coefficients')}, flush=True)
     (DEST/(STEM+'_record.json')).write_text(json.dumps(dict(
-        definition='C^d split: fewest even PSWFs with R_nu^(j)(1) = 0, j <= d; w(0) = 1; bandwidth by chi(1) = eps',
+        definition='C^d split: fewest even PSWFs with R_nu^(j)(1) = 0, j <= d; w(0) = 1; bandwidth c2_bandwidth (ESP\'s '
+                   'rule chi(1) = eps, raised where the C^2 Coulomb split would exceed eps); psi_0 rows: ESP\'s rule',
         truncation='sqrt(int_{|xi|>c} |xi|^2 S_hat^2 / int_R3 |xi|^2 S_hat^2), limit of large boxes, r_c = 1',
         jump='|R_nu^(d+1)(1)| / (nu (nu+1) ... (nu+d)); psi_0: force jump (nu = 1) or energy jump (nu >= 2) relative',
         rows=rows), indent=1)+'\n')
