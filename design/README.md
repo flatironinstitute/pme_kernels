@@ -18,7 +18,8 @@ python export.py                                            # records -> ../data
   which it meets the tolerance, with the B-spline and the `ψ₀` kernel for comparison. Each minimization takes a few
   seconds, and the search for `s*` about a minute for each order and tolerance; the whole study, with its comparisons
   and checks, about 15 minutes on 14 cores. Other options: `--checks` (constraints between collocation points, errors
-  on finer grids), `--tables 5 128` (accuracy of the tables), `--curves` and `--charge` (data of Figures 5.2 and 2.1).
+  on finer grids; `records/si_coarsest_checks.json`), `--tables 5 128` (accuracy of the tables;
+  `records/si_coarsest_tables_d5_m128.json`), `--curves` and `--charge` (data of Figures 5.2 and 2.1).
 - `si_figures.py`: data of Figure 5.1.
 - The remaining files are modules that these programs import: PSWF bases, cell integrals of the alias sums,
   the AD error, and the sequential quadratic programming method.
