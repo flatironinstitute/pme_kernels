@@ -13,7 +13,7 @@ python examples/pme_coulomb.py --eps 1e-4 --P 5 --N 1000 --L 10
 
 A particle mesh Ewald code keeps its structure: the local part is summed over the pairs within the cutoff, and the
 smooth part is computed by spreading, FFT, the influence function, inverse FFT, and interpolation. With the new
-kernels, four things change, all of them tables:
+kernels, four things change:
 
 1. **Local part.** Replace the real-space kernel (for example `erfc(αr)/r` in Gaussian Ewald methods) by the local
    part `L₁(r)` of the C² split and its derivative, `C2Split(1, eps, rc).local(r)` and `.local(r, 1)`; tabulate them

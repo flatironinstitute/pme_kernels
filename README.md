@@ -18,7 +18,8 @@ any code can read and as a small NumPy package:
   tolerance on the coarsest grid for its order, never finer than that of the B-spline of the same order.
 
 The kernels depend only on the order and the tolerance, not on the grid or the box, so they are tabulated once. A PME
-code adopts them by replacing tables: see [`examples/README.md`](examples/README.md).
+code adopts them without changing its structure; [`examples/README.md`](examples/README.md) lists the four things that
+change.
 
 ## Contents
 
@@ -57,17 +58,17 @@ par = pk.choose(1e-4, 5, rc=9.0, L=50.0) # grid for a box of side 50: par['n'] p
 ```
 
 `python examples/pme_coulomb.py` computes the forces of random charges with the new kernels and compares them with an
-Ewald sum; with `--eps 1e-4 --P 5` the relative RMS force error is below `10⁻⁴`, about ten times smaller than that of
-the B-spline of the same order on the same grid.
+Ewald sum; with `--eps 1e-4 --P 5` the relative RMS force error is below `10⁻⁴`, about a tenth of that of the B-spline
+of the same order on the same grid.
 
 Install with `pip install -e .` (the data directory is found next to the package), or set `PME_KERNELS_DATA` to the
 data directory.
 
 ## Grids
 
-The largest grid spacing `h/r_c = π/(c_s s*)` on which `φ*_P` meets the tolerance (Table 5.2 of the paper; a dash means
-that no grid with `s ≤ 4` suffices). A box of side `L` takes the first FFT-friendly grid with at least `L/h` points in
-each dimension; the error decreases on finer grids.
+The largest grid spacing `h/r_c = π/(c_s s*)` with which `φ*_P` meets the tolerance (Table 5.2 of the paper; a dash
+means that no grid with `s ≤ 4` suffices). For a box of side `L`, a code takes the first FFT-friendly grid with at least
+`L/h` points in each dimension; the error decreases on finer grids.
 
 | tolerance | c_s   | P = 4 | P = 5 | P = 6 |
 |-----------|-------|-------|-------|-------|
